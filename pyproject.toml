@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "india-trading-agent"
+version = "0.2.0"
+description = "Paper-first, event-driven, cash-only Indian equity trading research system."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+kite = ["kiteconnect>=5.0.1,<6"]
+
+[project.scripts]
+india-trader = "india_trader.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["india_trader*"]
+
+[tool.setuptools.package-data]
+india_trader = ["web/*.html"]

@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>India Trading Agent | Trading Desk</title>
+  <script nonce="__NONCE__">
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style nonce="__NONCE__">
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 14px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: var(--cp-accent-soft); }
+button { cursor: pointer; border: 1px solid var(--cp-border); border-radius: .625rem; padding: 9px 16px; background: var(--cp-surface); color: var(--cp-text); font-weight: 600; }
+button:hover { border-color: var(--cp-accent); }
+button:disabled { cursor: not-allowed; opacity: .5; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; }
+a { color: var(--cp-link); }
+code, .mono { font-family: Consolas, "Courier New", Courier, monospace; }
+.shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
+.sidebar { background: var(--cp-bg-elevated); border-right: 1px solid var(--cp-border); padding: 28px 20px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 44px; }
+.brand-mark { width: 40px; height: 40px; padding: 7px; background: var(--cp-accent-soft); border-radius: 10px; color: var(--cp-accent); }
+.brand strong { display: block; letter-spacing: -.3px; font-size: 16px; }
+.brand small { color: var(--cp-text-muted); font-size: 11px; letter-spacing: 1.5px; }
+.nav { display: grid; gap: 8px; }
+.nav button { display: flex; gap: 12px; text-align: left; background: var(--cp-bg-elevated); border-color: var(--cp-bg-elevated); color: var(--cp-text-muted); padding: 12px; }
+.nav button.active { background: var(--cp-accent-soft); color: var(--cp-accent); }
+.nav svg { width: 20px; height: 20px; flex: none; }
+.sidebar-bottom { margin-top: auto; color: var(--cp-text-muted); font-size: 12px; }
+.small-label { color: var(--cp-text-muted); text-transform: uppercase; font-size: 10px; letter-spacing: 1.4px; font-weight: 700; }
+.market-label { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 12px; }
+.dot { width: 8px; height: 8px; display: inline-block; border-radius: 50%; background: var(--cp-warning); flex: none; }
+.dot.live { background: var(--cp-success); }
+.main { min-width: 0; padding: 24px 36px 32px; max-width: 1680px; width: 100%; margin: auto; }
+.topbar, .heading, .panel-heading, .actions, .inline { display: flex; align-items: center; gap: 12px; }
+.topbar { justify-content: space-between; border-bottom: 1px solid var(--cp-border); padding-bottom: 20px; }
+.breadcrumb { color: var(--cp-text-muted); font-size: 12px; }
+.breadcrumb strong { color: var(--cp-text); font-weight: 600; }
+.topbar .actions { gap: 8px; }
+.icon-btn { width: 36px; height: 36px; padding: 7px; }
+.icon-btn svg { width: 20px; height: 20px; }
+.clock { font-variant-numeric: tabular-nums; color: var(--cp-text-muted); font-size: 12px; margin-right: 8px; }
+.heading { justify-content: space-between; margin: 28px 0 20px; flex-wrap: wrap; }
+h1 { margin: 0; font-weight: 650; font-size: clamp(26px, 3vw, 34px); letter-spacing: -1px; line-height: 1.2; }
+h2 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: -.2px; }
+h3 { font-size: 14px; margin: 0; }
+p { margin: 8px 0 0; }
+.muted { color: var(--cp-text-muted); }
+.sub { color: var(--cp-text-muted); font-size: 12px; }
+.primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.primary:hover { background: var(--cp-accent-hover); color: var(--cp-accent-fg); }
+.danger { color: var(--cp-danger); }
+.status { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: .625rem; background: var(--cp-surface); border: 1px solid var(--cp-border); font-size: 12px; font-weight: 650; }
+.status.success { color: var(--cp-success); }
+.status.warning { color: var(--cp-text); }
+.status.danger { color: var(--cp-danger); }
+.banner { display: flex; gap: 16px; align-items: flex-start; padding: 16px 20px; border: 1px solid var(--cp-border); background: var(--cp-bg-elevated); border-radius: .625rem; margin-bottom: 24px; }
+.banner .dot { margin-top: 7px; }
+.banner strong { font-size: 13px; }
+.banner p { margin: 3px 0 0; color: var(--cp-text-muted); font-size: 12px; }
+.banner button { margin-left: auto; flex: none; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.card, .panel { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; box-shadow: 0 1px 2px var(--cp-border); }
+.card { padding: 20px; }
+.card .value { font-size: clamp(23px, 2.3vw, 32px); line-height: 1.2; margin: 14px 0 8px; font-weight: 650; letter-spacing: -.8px; font-variant-numeric: tabular-nums; }
+.positive { color: var(--cp-success); }
+.negative { color: var(--cp-danger); }
+.grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 20px; margin-bottom: 20px; align-items: start; }
+.panel { min-width: 0; overflow: hidden; }
+.panel-heading { justify-content: space-between; padding: 20px 24px; }
+.panel-body { padding: 0 24px 24px; }
+.chip { background: var(--cp-surface-soft); border-radius: 6px; padding: 3px 8px; color: var(--cp-text-muted); font-size: 10px; letter-spacing: .5px; font-weight: 650; white-space: nowrap; }
+.chip.accent { color: var(--cp-accent); background: var(--cp-accent-soft); }
+.chip.good { color: var(--cp-success); }
+.chart { min-height: 220px; position: relative; background: var(--cp-surface); }
+.chart svg { display: block; width: 100%; height: 210px; }
+.chart-grid { stroke: var(--cp-border); stroke-width: 1; stroke-dasharray: 3 5; }
+.chart-line { fill: none; stroke: var(--cp-accent); stroke-width: 2.5; stroke-linejoin: round; }
+.chart-empty { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; }
+.chart-empty strong { font-size: 14px; font-weight: 600; }
+.chart-empty p { font-size: 12px; color: var(--cp-text-muted); }
+.chart-labels { position: relative; height: 16px; color: var(--cp-text-muted); font-size: 10px; margin: 0 2px 16px; }
+.chart-labels span { position: absolute; }
+.chart-labels span:nth-child(1) { left: 0; }
+.chart-labels span:nth-child(2) { left: 28%; transform: translateX(-50%); }
+.chart-labels span:nth-child(3) { left: 60%; transform: translateX(-50%); }
+.chart-labels span:nth-child(4) { right: 0; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; gap: 12px; border-bottom: 1px solid var(--cp-border); }
+.row:last-child { border-bottom: none; }
+.row strong { font-size: 13px; font-weight: 600; }
+.row small { display: block; color: var(--cp-text-muted); font-size: 11px; margin-top: 3px; }
+.amount { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.empty { color: var(--cp-text-muted); padding: 36px 20px; text-align: center; font-size: 13px; }
+.empty small { display: block; margin-top: 8px; font-size: 12px; }
+.table-wrap { overflow: auto; }
+table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; }
+th { color: var(--cp-text-muted); font-weight: 500; text-align: left; padding: 12px 20px; background: var(--cp-surface-soft); border-top: 1px solid var(--cp-border); }
+td { padding: 14px 20px; border-top: 1px solid var(--cp-border); font-variant-numeric: tabular-nums; }
+.side-buy { color: var(--cp-success); font-weight: 700; }
+.side-sell { color: var(--cp-accent); font-weight: 700; }
+.section { display: none; }
+.section.active { display: block; }
+.divider { height: 1px; background: var(--cp-border); margin: 20px 0; }
+.cost-row { margin: 12px 0 16px; }
+.meter { height: 5px; border-radius: 4px; background: var(--cp-surface-soft); margin-top: 8px; overflow: hidden; }
+.meter span { display: block; height: 5px; background: var(--cp-accent); width: 0; }
+.setup-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 20px; }
+.field { margin: 18px 0; }
+.field label { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; font-weight: 650; margin-bottom: 8px; }
+.field input { width: 100%; padding: 12px; border: 1px solid var(--cp-border); border-radius: .625rem; background: var(--cp-bg-elevated); color: var(--cp-text); font-family: Consolas, "Courier New", Courier, monospace; font-size: 12px; }
+.field input::placeholder { color: var(--cp-text-muted); }
+.field .sub { margin-top: 6px; }
+.setup-note { padding: 16px; border-radius: .625rem; background: var(--cp-accent-soft); font-size: 12px; color: var(--cp-text); line-height: 1.6; }
+.action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.feed-item { padding: 12px 0; display: flex; gap: 10px; border-bottom: 1px solid var(--cp-border); }
+.feed-item .dot { margin-top: 5px; }
+.feed-item p { font-size: 12px; margin: 3px 0 0; color: var(--cp-text-muted); overflow-wrap: anywhere; }
+.activity { max-height: 560px; overflow: auto; }
+.discovery-panel { margin-bottom: 20px; }
+.discovery-summary { display: flex; flex-wrap: wrap; gap: 16px; color: var(--cp-text-muted); font-size: 12px; }
+.watchlist-scroll { max-height: 580px; overflow-y: auto; }
+.event { padding: 16px 24px; border-top: 1px solid var(--cp-border); }
+.event-head { display: flex; gap: 12px; align-items: center; font-size: 11px; color: var(--cp-text-muted); }
+.event p { font-size: 12px; overflow-wrap: anywhere; }
+.footer { display: flex; gap: 20px; justify-content: space-between; color: var(--cp-text-muted); font-size: 11px; margin-top: 24px; border-top: 1px solid var(--cp-border); padding-top: 16px; }
+.toast { position: fixed; bottom: 24px; right: 24px; max-width: 420px; border: 1px solid var(--cp-border-strong); border-radius: .625rem; background: var(--cp-surface); color: var(--cp-text); padding: 16px 20px; z-index: 20; box-shadow: var(--cp-shadow); display: none; }
+.toast.show { display: block; }
+.nowrap { white-space: nowrap; }
+.space-top { margin-top: 20px; }
+[hidden] { display: none !important; }
+@media (max-width: 1100px) { .shell { grid-template-columns: 184px minmax(0,1fr); } .main { padding: 20px; } .cards { gap: 12px; } .card { padding: 16px; } .grid { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 760px) { .shell { display: block; } .sidebar { position: static; height: auto; padding: 16px; border-right: 0; border-bottom: 1px solid var(--cp-border); } .brand { margin-bottom: 16px; } .nav { display: flex; overflow: auto; } .nav button { white-space: nowrap; padding: 8px 12px; } .nav svg, .sidebar-bottom { display: none; } .main { padding: 16px; } .cards { grid-template-columns: repeat(2,minmax(0,1fr)); } .topbar { gap: 8px; } .clock { display: none; } .setup-grid { grid-template-columns: minmax(0,1fr); } .banner { flex-wrap: wrap; } .banner button { margin-left: 0; } .footer { flex-direction: column; gap: 6px; } .toast { left: 16px; right: 16px; } }
+@media (prefers-reduced-motion: no-preference) { button { transition: border-color .15s, background .15s; } }
+  </style>
+</head>
+<body>
+<noscript><div class="banner"><strong>JavaScript is disabled. Account status is unknown and credential submission is disabled. The engine may still be running; check the broker directly.</strong></div></noscript>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><g stroke="currentColor" stroke-width="2" fill="none"><path d="M6 3v22M14 6v16M22 1v26"/><rect x="3" y="8" width="6" height="9"/><rect x="11" y="10" width="6" height="7"/><rect x="19" y="5" width="6" height="13"/></g></svg>
+      <div><strong>India Trading</strong><small>AUTONOMOUS DESK</small></div>
+    </div>
+    <div class="small-label">Workspace</div>
+    <nav class="nav" aria-label="Dashboard sections">
+      <button class="active" data-tab="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview</button>
+      <button data-tab="transactions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h16l-4-4M21 17H5l4 4"/></svg>Trades &amp; orders</button>
+      <button data-tab="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Agent activity</button>
+      <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Credentials</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="small-label">Execution boundary</div>
+      <div class="market-label"><span class="dot" id="side-dot"></span><span id="side-state">Status not yet known</span></div>
+      <p>NSE cash equities<br>Long-only &middot; Fully funded</p>
+      <div class="divider"></div>
+      <p>No bank transfers.<br>No borrowed capital.<br>No guaranteed returns.</p>
+      <p class="space-top mono">LOCAL / v0.2</p>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="breadcrumb">Trading workspace <span aria-hidden="true"> / </span><strong id="crumb">Overview</strong></div>
+      <div class="actions">
+        <span class="clock" id="clock">India Standard Time</span>
+        <button class="icon-btn" id="theme-button" aria-label="Toggle light and dark theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 13A8 8 0 0 1 11 4a8.5 8.5 0 1 0 9 9Z"/></svg></button>
+        <span class="chip" id="account-label">ACCOUNT UNKNOWN</span>
+      </div>
+    </header>
+    <div class="heading">
+      <div><div class="small-label" id="today-label">TODAY / NSE CASH</div><h1 id="page-title">Your trading overview</h1><p class="muted" id="page-subtitle">A clear view of the engine, its decisions and your exposure.</p></div>
+      <div class="actions"><span class="status warning" id="status-badge" role="status" aria-live="polite"><span class="dot" id="status-dot"></span><span id="status-text">Connecting to local engine</span></span></div>
+    </div>
+    <div class="banner" id="state-banner">
+      <span class="dot" id="banner-dot"></span>
+      <div><strong id="banner-title">Waiting for authenticated local status</strong><p id="banner-reason">This page alone cannot confirm whether an engine or position is active. Account data appears after an authorized connection.</p></div>
+      <button class="primary" id="setup-shortcut">Configure credentials</button>
+    </div>
+
+    <section id="overview" class="section active" aria-label="Trading overview">
+      <article class="panel discovery-panel">
+        <div class="panel-heading"><div><h2>Intraday opportunity discovery</h2><p class="sub" id="discovery-reason">Broad-market scanning starts with the live worker; discoveries are not automatic buys.</p></div><span class="chip" id="discovery-state">WAITING</span></div>
+        <div class="panel-body"><div class="discovery-summary"><span id="discovery-universe">Universe: not loaded</span><span id="discovery-time">Last scan: &mdash;</span><span id="discovery-counts">Actively tracked: &mdash;</span><span>60s market scans &middot; news-triggered scans at most every 30s &middot; zero scan LLM tokens</span></div></div>
+      </article>
+      <div class="cards">
+        <article class="card"><div class="small-label">Today's trading P&amp;L</div><div class="value" id="total-pnl">&mdash;</div><div class="sub">Realized + open; modeled trading fees only</div></article>
+        <article class="card"><div class="small-label">Realized P&amp;L</div><div class="value" id="realized-pnl">&mdash;</div><div class="sub" id="completed-label">No completed trades yet</div></article>
+        <article class="card"><div class="small-label">Open exposure</div><div class="value" id="exposure">&mdash;</div><div class="sub" id="position-count">No account connected</div></article>
+        <article class="card"><div class="small-label">Allocated capital</div><div class="value" id="capital">&mdash;</div><div class="sub">Capped at available cash / INR 25,000</div></article>
+      </div>
+      <div class="grid">
+        <article class="panel">
+          <div class="panel-heading"><div><h2>Session equity</h2><p class="sub">Allocated equity, sampled through the session</p></div><span class="chip">TODAY &middot; IST</span></div>
+          <div class="panel-body">
+            <div class="chart">
+              <svg viewBox="0 0 700 210" preserveAspectRatio="none" aria-label="Session equity chart" role="img"><path class="chart-grid" d="M0 35H700M0 85H700M0 135H700M0 185H700"/><path id="equity-line" class="chart-line" d=""/></svg>
+              <div class="chart-empty" id="chart-empty"><strong>No session data yet</strong><p>Actual ledger samples will appear here. No simulated returns are shown.</p></div>
+            </div>
+            <div class="chart-labels"><span>09:15</span><span>11:00</span><span>13:00</span><span>15:30</span></div>
+            <div class="inline sub"><span class="dot" id="data-dot"></span><span id="data-time">Waiting for a validated live connection</span></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><div><h2>Actively monitored stocks</h2><p class="sub" id="watchlist-note">Initial picks plus qualified intraday discoveries</p></div><span class="chip accent" id="watch-count">AUTO</span></div>
+          <div class="panel-body watchlist-scroll" id="watchlist"><div class="empty">No stocks selected yet<small>Selection and intraday discovery follow broker authentication.</small></div></div>
+        </article>
+      </div>
+      <div class="grid">
+        <article class="panel">
+          <div class="panel-heading"><div><h2>Open positions</h2><p class="sub">Only shares owned by this agent</p></div><span class="chip" id="open-count">0 POSITIONS</span></div>
+          <div class="table-wrap"><table><thead><tr><th>Stock</th><th>Shares</th><th>Average entry</th><th>Stop trigger</th><th>Target</th><th>Exit status</th></tr></thead><tbody id="position-rows"><tr><td colspan="6" class="empty">No open positions</td></tr></tbody></table></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><div><h2>Risk &amp; AI budget</h2><p class="sub">Fixed controls, not a profit target</p></div><span class="chip">GUARDED</span></div>
+          <div class="panel-body">
+            <div class="row"><span>Entry attempts</span><strong id="attempts">0 / 3</strong></div>
+            <div class="row"><span>Modeled daily loss threshold</span><strong>0.75%</strong></div>
+            <div class="row"><span>Modeled fees today</span><strong id="fees">&mdash;</strong></div>
+            <div class="cost-row"><div class="row"><span>AI calls / reserved tokens</span><strong id="ai-usage">0 / 2 &middot; 0 / 8,000</strong></div><div class="meter"><span id="token-meter"></span></div></div>
+            <div class="inline sub"><span id="ai-spend">$0.0000 reserved</span><span>&middot;</span><span>$0.10 / day cap estimate</span></div>
+            <div class="action-row"><button class="danger" id="stop-button" disabled>Stop &amp; flatten</button><button id="resume-button" disabled>Resume live</button></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="transactions" class="section" aria-label="Today's trades and orders">
+      <article class="panel">
+        <div class="panel-heading"><div><h2>Today's completed trades</h2><p class="sub">Net results for closed agent positions; fees are modeled estimates</p></div><span class="chip" id="trade-count">0 TRADES</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Closed at</th><th>Stock</th><th>Setup</th><th>Shares</th><th>Net P&amp;L</th><th>Fees</th><th>Exit reason</th></tr></thead><tbody id="trade-rows"></tbody></table></div>
+      </article>
+      <article class="panel space-top">
+        <div class="panel-heading"><div><h2>Executed transactions</h2><p class="sub">Cumulative fill deltas, including partial executions</p></div><span class="chip">AGENT FILLS ONLY</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Time</th><th>Stock</th><th>Side</th><th>Shares</th><th>Value</th><th>Fees</th><th>Purpose</th></tr></thead><tbody id="fill-rows"></tbody></table></div>
+      </article>
+      <article class="panel space-top">
+        <div class="panel-heading"><div><h2>Orders &amp; protection</h2><p class="sub">Acknowledged is not filled. Cancellation requests are not confirmations.</p></div><span class="chip">BROKER RECONCILED</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Time</th><th>Stock</th><th>Side</th><th>Filled / ordered</th><th>Limit</th><th>Trigger</th><th>Status</th></tr></thead><tbody id="order-rows"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="activity" class="section" aria-label="Agent activity and source health">
+      <div class="grid">
+        <article class="panel"><div class="panel-heading"><div><h2>Decision &amp; execution timeline</h2><p class="sub">Signals, rejections, pauses, fills and safety events</p></div><span class="chip">AUDIT LOG</span></div><div class="activity" id="activity-list"></div></article>
+        <article class="panel"><div class="panel-heading"><div><h2>Data health</h2><p class="sub">A required-source outage blocks new entries</p></div><span class="chip" id="feed-count">NOT CONNECTED</span></div><div class="panel-body"><div id="feed-list"></div><div class="divider"></div><div class="small-label">Global &amp; pre-market context</div><p class="sub" id="global-summary">Pre-market research begins at 08:30 IST after broker authentication.</p><div id="global-sources"></div><p class="sub" id="global-gaps">No claim of complete global-market coverage.</p><div class="divider"></div><div class="small-label">Universe source</div><p class="sub" id="universe-source">Automatic screening has not started.</p><div class="divider"></div><div class="small-label">Event classifier</div><p class="mono sub" id="model-label">Gemini Pro &middot; awaiting key</p><p class="sub">Market ticks, risk checks and order management use no LLM tokens. AI can only add a pause, never place an order.</p></div></article>
+      </div>
+    </section>
+
+    <section id="setup" class="section" aria-label="Credential configuration">
+      <div class="setup-grid">
+        <article class="panel">
+          <div class="panel-heading"><div><h2>Connect your accounts</h2><p class="sub">Only credentials. Stocks, model settings, feeds and risk rules are automatic.</p></div><span class="chip good">DPAPI ENCRYPTED</span></div>
+          <div class="panel-body">
+            <form id="credential-form" method="post" action="/api/config" autocomplete="off">
+              <div class="field"><label for="ai-key">Gemini API key <span class="chip" id="saved-ai_api_key">NOT SAVED</span></label><input id="ai-key" name="ai_api_key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste your Gemini Developer API key" disabled><p class="sub">API billing is separate from the Gemini app subscription. <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Create a key</a></p></div>
+              <div class="divider"></div>
+              <div class="field"><label for="broker-key">Zerodha Kite API key <span class="chip" id="saved-broker_api_key">NOT SAVED</span></label><input id="broker-key" name="broker_api_key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Your Kite Connect application key" disabled></div>
+              <div class="field"><label for="broker-secret">Kite API secret <span class="chip" id="saved-broker_api_secret">NOT SAVED</span></label><input id="broker-secret" name="broker_api_secret" type="password" autocomplete="new-password" spellcheck="false" placeholder="Required for the official broker sign-in flow" disabled><p class="sub">Not your trading password, PIN or OTP. Those stay on Zerodha's own sign-in page.</p></div>
+              <details><summary class="sub">Already have today's access token?</summary><div class="field"><label for="broker-token">Kite access token <span class="chip" id="saved-broker_access_token">NOT SAVED</span></label><input id="broker-token" name="broker_access_token" type="password" autocomplete="new-password" spellcheck="false" placeholder="Optional: today's Kite access token" disabled></div></details>
+              <div class="setup-note"><strong>Saving authorizes automatic real-money operation.</strong><br>Once credentials and market/data checks pass, the agent may place fully funded NSE cash orders. Allocation is limited to the lesser of eligible cash and INR 25,000, with one position at a time. No bank transfers, leverage or guaranteed profits. A stop-loss is not a guaranteed fill.</div>
+              <div class="action-row"><button type="submit" class="primary" id="save-button" disabled>Save &amp; authorize live startup</button><button type="button" id="broker-login" disabled>Sign in with Zerodha</button></div>
+              <p class="sub" id="save-status" role="status">Credentials are encrypted for your Windows user and are never returned to this page.</p>
+            </form>
+            <div class="divider"></div>
+            <div class="inline"><button class="danger" id="forget-button" disabled>Forget saved credentials</button><span class="sub">Available only when stopped and flat.</span></div>
+          </div>
+        </article>
+        <div>
+          <article class="panel"><div class="panel-heading"><h2>What happens automatically</h2></div><div class="panel-body">
+            <div class="row"><div><strong>1. Validate and protect</strong><small>Check AI model, broker identity and cash permissions.</small></div></div>
+            <div class="row"><div><strong>2. Prepare the market</strong><small>Load instruments, history, official news and liquidity screens.</small></div></div>
+            <div class="row"><div><strong>3. Monitor and act</strong><small>Only qualified signals clear funded-capital and execution gates.</small></div></div>
+            <div class="row"><div><strong>4. Resume on your next launch</strong><small>Stored keys are reused; an explicit Stop remains respected.</small></div></div>
+          </div></article>
+          <article class="panel space-top"><div class="panel-heading"><h2>One broker requirement remains</h2></div><div class="panel-body">
+            <p class="sub">Zerodha access tokens expire at 06:00 IST the next day. Saved API keys cannot bypass broker login or two-factor authentication. When needed, use <strong>Sign in with Zerodha</strong>; your API keys stay saved.</p>
+            <div class="divider"></div><div class="small-label">Register this redirect URL in your Kite app</div><p class="mono sub" id="redirect-url">http://127.0.0.1:8787/broker/callback</p>
+            <p class="sub space-top">Your broker must permit API/algo trading, the required market data and your registered static IP. Publisher availability and a valid subscription cannot be created by the agent.</p>
+          </div></article>
+          <article class="panel space-top"><div class="panel-heading"><h2>Private by default</h2></div><div class="panel-body"><p class="sub">Localhost only. Keys are stored with Windows DPAPI, not in browser storage or plaintext configuration. Only selected public news may be sent to Gemini.</p><p class="sub space-top">This is an experimental strategy implementation, not a proven profitable trading service.</p></div></article>
+        </div>
+      </div>
+    </section>
+    <footer class="footer"><span id="connection-footer">Local dashboard &middot; no broker connected</span><span>AI/data costs and tax excluded &middot; IST &middot; No guaranteed fills or returns</span></footer>
+  </main>
+</div>
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+<script nonce="__NONCE__">
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const titles = {
+    overview: ['Your trading overview', 'A clear view of the engine, its decisions and your exposure.', 'Overview'],
+    transactions: ["Today's trades & orders", 'Every owned fill and order, with no invented execution results.', 'Trades & orders'],
+    activity: ['Inside the agent', 'Why it acted, why it waited, and which inputs are healthy.', 'Agent activity'],
+    setup: ['Connect once. Stay in control.', 'Secure credentials, automatic preparation and clear operating states.', 'Credentials']
+  };
+  const labels = {WAITING_CONFIG:'Waiting for configuration', VALIDATING:'Validating credentials',
+    PREPARING:'Preparing the market', STARTING:'Warming up', CHECKING_SOFTWARE:'Checking software',
+    PREMARKET_READY:'Pre-market research ready',
+    CHECKS_REQUIRED:'Software checks required', LIVE:'Live engine', LIVE_DEGRADED:'Live - news retry', BLOCKED:'Trading blocked',
+    BROKER_LOGIN_REQUIRED:'Broker sign-in required', MARKET_CLOSED:'Market closed / waiting',
+    ENTRY_WINDOW_CLOSED:'Entry window closed', WAITING_HISTORY:'Waiting for broker candles',
+    WAITING_MARKET:'Waiting for eligible market data', NEEDS_CASH:'Usable cash required',
+    STOPPING:'Stopping & reconciling', STOPPED:'Stopped by you', RECOVERY:'Exposure recovery only', OFFLINE:'Dashboard disconnected', DEMO:'Offline preview'};
+  const local = location.protocol === 'http:' && location.hostname === '127.0.0.1';
+  let token = local ? new URLSearchParams(location.hash.slice(1)).get('access') || '' : '';
+  if (local) {
+    try {
+      token = token || sessionStorage.getItem('ita-ui-token') || '';
+      if (token) sessionStorage.setItem('ita-ui-token', token);
+    } catch (error) {
+      if (!['SecurityError','QuotaExceededError'].includes(error.name)) throw error;
+      console.warn('Browser session storage is unavailable. Use the launcher again when refreshing this tab.');
+    }
+  }
+  if (local && location.hash) history.replaceState(null, '', location.pathname + location.search);
+  let state = null, refreshing = false, toastTimer = null;
+  const money = value => value === null || value === undefined || !Number.isFinite(Number(value))
+    ? '\u2014' : new Intl.NumberFormat('en-IN', {style:'currency', currency:'INR', maximumFractionDigits:2}).format(Number(value)/100);
+  const number = value => new Intl.NumberFormat('en-IN').format(Number(value || 0));
+  const atTime = value => value ? new Date(value).toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false}) : '\u2014';
+  function text(id, value) { $(id).textContent = value; }
+  function toast(message) {
+    $('toast').textContent = message; $('toast').classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 7000);
+  }
+  function tab(name) {
+    for (const node of document.querySelectorAll('.section')) node.classList.toggle('active', node.id === name);
+    for (const node of document.querySelectorAll('[data-tab]')) node.classList.toggle('active', node.dataset.tab === name);
+    text('page-title', titles[name][0]); text('page-subtitle', titles[name][1]); text('crumb', titles[name][2]);
+  }
+  for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => tab(button.dataset.tab));
+  $('setup-shortcut').addEventListener('click', () => tab('setup'));
+  $('theme-button').addEventListener('click', () => document.documentElement.setAttribute('data-theme', document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+  text('redirect-url', location.origin + '/broker/callback');
+  function clock() {
+    text('clock', new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata', hour12:false}) + ' IST');
+    text('today-label', new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', day:'2-digit', month:'short', year:'numeric'}).toUpperCase() + ' / NSE CASH');
+  }
+  clock(); setInterval(clock, 1000);
+  async function api(path, body) {
+    if (!token) throw new Error('Open this dashboard with Start-IndiaTradingAgent.ps1 to authorize this browser tab.');
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(path, {
+        method: body === undefined ? 'GET' : 'POST', cache:'no-store', signal:controller.signal,
+        headers:{'X-Dashboard-Token':token, ...(body === undefined ? {} : {'Content-Type':'application/json'})},
+        ...(body === undefined ? {} : {body:JSON.stringify(body)})
+      });
+      const value = await response.json();
+      if (!response.ok) throw new Error(value.error || 'The local service refused this request.');
+      return value;
+    } finally { clearTimeout(timer); }
+  }
+  function emptyTable(id, columns, message) {
+    const row = document.createElement('tr'), cell = document.createElement('td');
+    cell.colSpan = columns; cell.className = 'empty'; cell.textContent = message; row.append(cell);
+    $(id).replaceChildren(row);
+  }
+  function table(id, rows, fields, empty) {
+    if (!rows.length) { emptyTable(id, fields.length, empty); return; }
+    const fragment = document.createDocumentFragment();
+    for (const item of rows) {
+      const row = document.createElement('tr');
+      fields.forEach(field => {
+        const cell = document.createElement('td'), value = field(item);
+        cell.textContent = typeof value === 'object' ? value.text : value;
+        if (typeof value === 'object') cell.className = value.className || '';
+        row.append(cell);
+      }); fragment.append(row);
+    }
+    $(id).replaceChildren(fragment);
+  }
+  function pnl(id, value) {
+    text(id, money(value));
+    $(id).classList.toggle('positive', value > 0); $(id).classList.toggle('negative', value < 0);
+  }
+  function render(s) {
+    state = s;
+    const live = s.live === true, m = s.metrics;
+    text('status-text', labels[s.state] || s.state.replaceAll('_',' '));
+    $('status-badge').className = 'status ' + (live ? 'success' : ['BLOCKED','OFFLINE','RECOVERY'].includes(s.state) ? 'danger' : 'warning');
+    for (const id of ['status-dot','side-dot','banner-dot','data-dot']) $(id).classList.toggle('live', live);
+    text('side-state', live ? 'Live broker engine' : 'Not trading live');
+    text('banner-title', live ? 'Connected to real markets. Every order is risk-gated.' : labels[s.state] || 'Waiting');
+    text('banner-reason', s.reason);
+    $('setup-shortcut').hidden = live;
+    text('setup-shortcut', s.state === 'WAITING_CONFIG' ? 'Configure credentials' : 'View credentials');
+    const brokerSaved = !!s.credentials?.saved?.broker_api_key;
+    const authStatus = s.account?.authentication_status;
+    text('account-label', s.account
+      ? 'KITE ' + s.account.id_masked + (authStatus === 'reauthentication_required' ? ' \u00b7 SIGN IN'
+        : authStatus === 'not_verified' ? ' \u00b7 UNVERIFIED' : '')
+      : brokerSaved ? 'ACCOUNT NOT VERIFIED' : 'NO ACCOUNT CONFIGURED');
+    $('account-label').title = s.account?.verified_at
+      ? 'Broker identity verified at ' + atTime(s.account.verified_at) + ' IST. This is not a live-trading indicator.'
+      : 'Saved credentials are not proof of a verified account or active trading session.';
+    pnl('total-pnl', m?.total_net_paise); pnl('realized-pnl', m?.realized_net_paise);
+    const positions = s.positions || [];
+    text('exposure', m ? money(positions.reduce((sum,p) => sum + p.quantity * (s.quotes?.[p.symbol]?.bid_paise || (p.bought ? p.buy_value/p.bought : 0)), 0)) : '\u2014');
+    text('capital', money(m?.allocated_capital_paise));
+    text('position-count', m ? positions.length + ' open position' + (positions.length === 1 ? '' : 's')
+      : s.account ? 'Broker identified; trading not started' : 'Waiting for broker verification');
+    text('completed-label', (m?.completed_trades || 0) + ' completed trades today');
+    text('open-count', positions.length + ' POSITIONS');
+    text('attempts', (m?.entry_attempts || 0) + ' / 3');
+    text('fees', money(m?.modeled_fees_paise));
+    text('ai-usage', (s.ai?.calls || 0) + ' / 2 \u00b7 ' + number(s.ai?.tokens) + ' / 8,000');
+    text('ai-spend', '$' + ((s.ai?.estimated_micros || 0)/1000000).toFixed(4) + ' reserved');
+    $('token-meter').style.width = Math.min(100,(s.ai?.tokens || 0)/8000*100) + '%';
+    text('model-label', s.model || 'Gemini Pro');
+    const discovery=s.discovery;
+    const scanTime=discovery?.last_scan_at;
+    const scanAge=scanTime ? (Date.now()-Date.parse(scanTime))/1000 : null;
+    const discoveryStale=s.worker_running && ['scanning','degraded','ready'].includes(discovery?.state) && scanAge!==null && scanAge>150;
+    text('discovery-state', discoveryStale ? 'SCAN STALE' : (discovery?.state || 'waiting').replaceAll('_',' ').toUpperCase());
+    text('discovery-reason', discoveryStale ? 'Discovery has not produced a recent scan. Existing position management is separate.'
+      : discovery?.reason || (discovery?.state==='scanning'
+        ? 'Scanning beyond the initial list. New admissions still need completed bars, current news and every execution/risk check.'
+        : 'Broad-market scanning starts with the live worker; discoveries are not automatic buys.'));
+    text('discovery-universe', 'Universe: '+(discovery?.universe_count ?? '\u2014')+
+      ' \u00b7 liquid/affordable now: '+(discovery?.liquid_candidates ?? '\u2014'));
+    text('discovery-time', 'Last scan: '+atTime(scanTime)+' IST'+(discovery?.trigger?' \u00b7 '+discovery.trigger.replaceAll('_',' '):''));
+    text('discovery-counts', 'Tracked: '+(discovery?.active_symbols?.length ?? '\u2014')+
+      ' / '+(discovery?.maximum_tracked_stocks || 15)+' \u00b7 added this scan: '+(discovery?.admitted_this_scan?.join(', ') || 'none'));
+    text('data-time', s.account?.last_update
+      ? 'Last engine snapshot ' + atTime(s.account.last_update) + ' IST' + (s.account.snapshot_fresh ? '' : ' \u00b7 stale / saved view')
+      : s.account?.verified_at ? 'Broker identity verified; no trading-engine snapshot yet'
+      : 'Waiting for broker verification');
+    text('connection-footer', live ? 'Live execution active \u00b7 ' + (s.entries_allowed ? 'entries eligible for checks' : 'new entries gated') : 'Not live \u00b7 ' + (labels[s.state] || s.state));
+    const watch = s.watchlist || [], watchFragment = document.createDocumentFragment();
+    text('watch-count', watch.length ? watch.length + ' MONITORED' : 'AUTO');
+    text('watchlist-note', discovery?.last_scan_at
+      ? 'Intraday scan '+atTime(discovery.last_scan_at)+' IST; initial names remain protected from churn'
+      : s.watchlist_refresh?.refreshed_at
+      ? 'Screened ' + s.watchlist_refresh.session_day + ' ' + atTime(s.watchlist_refresh.refreshed_at) +
+        ' IST \u00b7 ' + (s.watchlist_refresh.universe_count ?? '\u2014') + ' candidates'
+      : 'Refreshed each trading day using current data and recent history');
+    for (const item of watch) {
+      const row = document.createElement('div'); row.className = 'row';
+      const left = document.createElement('div'), title = document.createElement('strong'), caption = document.createElement('small');
+      title.textContent = item.symbol; caption.textContent = (item.sector ? item.sector + ' \u00b7 ' : '') +
+        (item.spread_bps === null ? 'Prior-close research; spread pending' : 'Spread ' + item.spread_bps + ' bps') +
+        ' \u00b7 Score ' + (item.score ?? '\u2014')+
+        (item.origin==='intraday_discovery'?' \u00b7 INTRADAY DISCOVERY':'');
+      left.append(title,caption); row.append(left);
+      const decision=s.signal_diagnostics?.[item.symbol];
+      if (decision) {
+        const explanation=document.createElement('small');
+        explanation.textContent=atTime(decision.bar_end)+' \u00b7 '+decision.reason;
+        explanation.title=JSON.stringify(decision.setup_checks || {});
+        left.append(explanation);
+      }
+      const amount = document.createElement('div'); amount.className = 'amount';
+      amount.textContent = money(s.quotes?.[item.symbol]?.price_paise || item.price_paise);
+      row.title = item.reason || ''; row.append(amount); watchFragment.append(row);
+    }
+    if (watch.length) $('watchlist').replaceChildren(watchFragment);
+    else {
+      const empty=document.createElement('div');empty.className='empty';
+      empty.textContent='No stocks selected yet. Selection follows successful broker/data preparation.';
+      $('watchlist').replaceChildren(empty);
+    }
+    table('position-rows', positions, [x=>x.symbol, x=>number(x.quantity), x=>money(x.bought ? x.buy_value/x.bought : null), x=>money(x.stop), x=>money(x.target), x=>x.exit_reason || 'Protecting / monitoring'], 'No open positions');
+    const trades = [...(s.trades || [])].reverse(); text('trade-count', trades.length + ' TRADES');
+    table('trade-rows', trades, [x=>atTime(x.at), x=>x.symbol, x=>x.setup, x=>number(x.bought), x=>({text:money(x.net_paise),className:x.net_paise>=0?'positive':'negative'}), x=>money(x.fees_paise), x=>x.exit_reason], 'No completed trades today');
+    table('fill-rows', [...(s.transactions || [])].reverse(), [x=>atTime(x.at), x=>x.symbol, x=>({text:x.side,className:x.side==='BUY'?'side-buy':'side-sell'}), x=>number(x.quantity), x=>money(x.value), x=>money(x.modeled_fees), x=>x.purpose], 'No executed transactions today');
+    table('order-rows', [...(s.orders || [])].reverse(), [x=>atTime(x.created), x=>x.symbol, x=>({text:x.side,className:x.side==='BUY'?'side-buy':'side-sell'}), x=>x.filled+' / '+x.quantity, x=>money(x.price), x=>x.trigger?money(x.trigger):'\u2014', x=>x.status], 'No orders submitted today');
+    const activity = [...(s.activity || [])].reverse(), activityFragment = document.createDocumentFragment();
+    for (const item of activity) {
+      const node = document.createElement('article'); node.className='event';
+      const head = document.createElement('div'); head.className='event-head';
+      const kind = document.createElement('span'); kind.className='chip'; kind.textContent=item.kind.replaceAll('_',' ');
+      const when = document.createElement('span'); when.textContent=atTime(item.at)+' IST'; head.append(kind,when);
+      const content = document.createElement('p');
+      content.textContent = [item.symbol || item.source, item.headline || item.reason || item.error || item.error_code || item.exit_reason || item.setup || item.purpose || 'Ledger event recorded.'].filter(Boolean).join(' \u00b7 ');
+      node.append(head,content); activityFragment.append(node);
+    }
+    if (!activity.length) { const node=document.createElement('div');node.className='empty';node.textContent='No session events yet.';activityFragment.append(node); }
+    $('activity-list').replaceChildren(activityFragment);
+    const feedFragment = document.createDocumentFragment(), feeds = Object.entries(s.feeds || {});
+    for (const [name, feed] of feeds) {
+      const row=document.createElement('div');row.className='feed-item';
+      const dot=document.createElement('span');dot.className='dot'+(feed.healthy?' live':'');
+      const body=document.createElement('div'), title=document.createElement('strong'), caption=document.createElement('p');
+      title.textContent=name;caption.textContent=feed.healthy?'Fetched '+atTime(feed.last_success)+' IST \u00b7 '+feed.items+' items'+(feed.latest_publication?' \u00b7 latest item '+atTime(feed.latest_publication):'')+(feed.attempts>1?' \u00b7 recovered on retry':''):
+        (feed.error_code ? feed.error_code+': ' : '')+feed.error+
+        (feed.last_success?' Last healthy check '+atTime(feed.last_success)+' IST.':'')+
+        (feed.last_verified_grace?' Only that previously verified timestamp may satisfy the unchanged freshness limit.':'');
+      body.append(title,caption);row.append(dot,body);feedFragment.append(row);
+    }
+    if (!feeds.length) { const empty=document.createElement('div');empty.className='empty';empty.textContent='Feeds connect during automatic preparation.';feedFragment.append(empty); }
+    $('feed-list').replaceChildren(feedFragment);
+    text('feed-count', feeds.length ? feeds.filter(([,x])=>x.healthy).length+' / '+feeds.length+' HEALTHY' : 'NOT CONNECTED');
+    text('universe-source', s.universe_source || 'Automatic screening has not started.');
+    const context=s.global_context, globalFragment=document.createDocumentFragment();
+    text('global-summary', context ? (context.policy_risk_reason || context.coverage) +
+      ' Checked '+atTime(context.checked_at)+' IST.' : 'Pre-market research begins at 08:30 IST after broker authentication.');
+    text('global-gaps', context?.gaps?.join(' ') || 'No claim of complete global-market coverage.');
+    for (const [name, source] of Object.entries(context?.sources || {})) {
+      const row=document.createElement('div');row.className='feed-item';
+      const body=document.createElement('div'),title=document.createElement('strong'),caption=document.createElement('p');
+      title.textContent=name;caption.textContent=source.healthy
+        ? 'Official releases reached; not a real-time global-price feed.' : source.error;
+      body.append(title,caption);row.append(body);globalFragment.append(row);
+    }
+    for (const headline of (context?.headlines || []).slice(0,6)) {
+      const item=document.createElement('p');item.className='sub';
+      item.textContent=headline.source+': '+headline.headline;
+      globalFragment.append(item);
+    }
+    $('global-sources').replaceChildren(globalFragment);
+    for (const field of ['ai_api_key','broker_api_key','broker_api_secret','broker_access_token']) {
+      const saved=!!s.credentials?.saved?.[field];text('saved-'+field,saved?'SAVED SECURELY':'NOT SAVED');
+      $('saved-'+field).classList.toggle('good',saved);
+    }
+    const active = s.worker_running || positions.length > 0;
+    const renew = s.state === 'BROKER_LOGIN_REQUIRED' && !s.worker_running;
+    $('save-button').disabled = !token || (active && !renew);
+    $('ai-key').disabled = active;
+    $('broker-key').disabled = active;
+    $('broker-secret').disabled = s.worker_running;
+    $('broker-token').disabled = s.worker_running;
+    $('broker-login').disabled = !token || s.worker_running || !s.credentials?.saved?.broker_api_secret;
+    $('forget-button').disabled = !token || active;
+    $('stop-button').disabled = !token || (!s.worker_running && !s.credentials?.auto_start);
+    $('resume-button').disabled = !token || s.worker_running || !s.credentials?.saved?.ai_api_key;
+    const equity=(s.equity || []).filter(x=>Number.isFinite(x.equity) && Number.isFinite(Date.parse(x.at)));
+    $('chart-empty').hidden=equity.length>=2;
+    if (equity.length>=2) {
+      const values=equity.map(x=>x.equity), min=Math.min(...values), max=Math.max(...values), range=Math.max(max-min,100);
+      $('equity-line').setAttribute('d', values.map((v,i)=>{
+        const observed=new Date(new Date(equity[i].at).getTime()+330*60000);
+        const minute=observed.getUTCHours()*60+observed.getUTCMinutes()+observed.getUTCSeconds()/60;
+        const fraction=Math.max(0,Math.min(1,(minute-555)/375));
+        return (i?'L':'M')+(fraction*688+6).toFixed(1)+','+(185-(v-min)/range*150).toFixed(1);
+      }).join(' '));
+    } else $('equity-line').setAttribute('d','');
+  }
+  async function refresh() {
+    if (refreshing || !token) return;
+    refreshing=true;
+    try { render(await api('/api/status')); }
+    catch(error) {
+      text('status-text','Dashboard disconnected');$('status-badge').className='status danger';
+      for(const id of ['status-dot','side-dot','banner-dot','data-dot']) $(id).classList.remove('live');
+      text('side-state','State unavailable');text('banner-title','No fresh local status');
+      text('banner-reason',error.message+' If exposure may be open, check the broker directly.');
+      text('connection-footer','Not live-confirmed \u00b7 local status unavailable');
+    } finally { refreshing=false; }
+  }
+  $('credential-form').addEventListener('submit', async event => {
+    event.preventDefault(); $('save-button').disabled=true;
+    const keys={};for(const field of ['ai_api_key','broker_api_key','broker_api_secret','broker_access_token']) keys[field]=$('credential-form').elements.namedItem(field).value;
+    try {
+      await api('/api/config',{keys,authorize_live:true});
+      $('credential-form').reset();text('save-status','Saved with Windows encryption. Automatic validation/startup is in progress.');
+      toast('Credentials saved securely. No LIVE state is claimed until checks pass.');await refresh();
+    } catch(error) { text('save-status',error.message);toast(error.message);$('save-button').disabled=false; }
+    finally { for(const key of Object.keys(keys)) keys[key]=''; }
+  });
+  $('stop-button').addEventListener('click', async()=>{try{await api('/api/stop',{});toast('Stop requested. Wait for confirmed flatness; verify the broker if anything is unresolved.');await refresh();}catch(error){toast(error.message);}});
+  $('resume-button').addEventListener('click', async()=>{try{await api('/api/resume',{authorize_live:true});toast('Automatic live startup requested. Existing risk stops and quarantines remain enforced.');await refresh();}catch(error){toast(error.message);}});
+  $('forget-button').addEventListener('click', async()=>{if(!confirm('Remove the encrypted saved credentials? This is allowed only when stopped and flat.'))return;try{await api('/api/forget',{confirm:true});$('credential-form').reset();toast('Saved credentials removed.');await refresh();}catch(error){toast(error.message);}});
+  $('broker-login').addEventListener('click', async()=>{
+    try {
+      const result=await api('/api/broker/login',{});
+      if(!result.url.startsWith('https://kite.zerodha.com/connect/login?')) throw new Error('Unexpected broker sign-in URL.');
+      window.open(result.url,'_blank','noopener,noreferrer');
+      toast('Complete login on Zerodha. The dashboard stores only the resulting session token.');
+    } catch(error){toast(error.message);}
+  });
+  emptyTable('trade-rows',7,'No completed trades today');emptyTable('fill-rows',7,'No executed transactions today');emptyTable('order-rows',7,'No orders submitted today');
+  if (!token) {
+    text('status-text','Authorized launch required');
+    text('banner-title','Open this page through the local launcher');
+    text('banner-reason','Run Start-IndiaTradingAgent.ps1. It opens an authorized local tab without putting API credentials in the browser URL.');
+    $('save-button').disabled=true;$('broker-login').disabled=true;$('forget-button').disabled=true;$('stop-button').disabled=true;$('resume-button').disabled=true;
+  } else { refresh(); setInterval(refresh,2500); }
+})();
+</script>
+</body>
+</html>

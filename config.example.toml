@@ -1,0 +1,93 @@
+# Copy to config.local.toml. All amounts are INR; bps = 1/100 of one percent.
+# These example symbols are NOT stock recommendations. Review today's eligibility.
+# Never store API keys, access tokens, passwords, PINs or bank credentials here.
+
+[risk]
+capital_rupees = 25000
+cash_buffer_bps = 1000
+max_position_bps = 2500
+risk_per_trade_bps = 25
+daily_loss_bps = 75
+max_trades = 3
+max_consecutive_losses = 2
+max_daily_buy_turnover_multiple = 2.0
+
+[market]
+symbols = ["RELIANCE", "ICICIBANK"]
+benchmark = "NIFTY 50"
+entry_start = "09:35"
+entry_end = "14:30"
+flatten_at = "15:10"
+close_at = "15:30"
+max_quote_age_seconds = 3
+max_spread_bps = 8
+max_depth_participation_bps = 1000
+queue_size = 4096
+
+[strategy]
+enabled = ["orb"]
+reward_r = 3.0
+min_net_reward_r = 1.5
+min_profit_cost_multiple = 3.0
+volume_ratio = 1.5
+min_stop_bps = 10
+max_stop_bps = 100
+cooldown_minutes = 30
+max_hold_minutes = 45
+
+[execution]
+entry_ttl_seconds = 8
+exit_ttl_seconds = 10
+protection_gap_bps = 30
+entry_slippage_bps = 3
+exit_slippage_bps = 15
+request_interval_seconds = 1.05
+reconcile_seconds = 5
+max_exit_reprices = 3
+
+[costs]
+# Illustrative conservative MODEL, not a claim about September 2026 tax/tariff rates.
+# Verify with your broker's current tariff, calculator and actual contract notes.
+brokerage_bps = 3.0
+brokerage_cap_rupees = 20
+sell_stt_bps = 2.5
+transaction_bps = 0.30
+sebi_bps = 0.01
+buy_stamp_bps = 0.30
+gst_percent = 18.0
+extra_buffer_bps = 2.0
+
+[news]
+inbox = 'data\events.jsonl'
+allowed_sources = ["operator", "licensed-wire"]
+required_sources = ["licensed-wire"]
+heartbeat_max_seconds = 180
+pause_minutes = 30
+# Optional HTTPS RSS/Atom URLs. Add every publisher hostname to allowed_sources
+# and required_sources when its coverage is essential. No scraping bypasses.
+rss_urls = []
+rss_poll_seconds = 120
+
+[ai]
+enabled = false
+share_public_news = false
+endpoint = "https://api.openai.com/v1/chat/completions"
+model = ""
+api_key_env = "TRADER_AI_API_KEY"
+max_calls_per_day = 2
+max_tokens_per_day = 4000
+max_cost_usd_per_day = 0.10
+# Example budget accounting prices only: update from your provider's actual tariff.
+input_usd_per_million = 3.0
+output_usd_per_million = 15.0
+max_input_bytes = 1400
+max_output_tokens = 128
+cooldown_seconds = 1800
+timeout_seconds = 8
+
+[live]
+enabled = false
+broker_user_id = ""
+# Supply only the ID your broker instructs you to use. A client order tag is NOT an algo ID.
+algo_id = ""
+qualification_file = 'data\qualification.json'

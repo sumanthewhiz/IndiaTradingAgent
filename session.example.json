@@ -1,0 +1,11 @@
+{
+  "day": "2026-09-21",
+  "trading_day": false,
+  "reviewed": false,
+  "symbols": ["RELIANCE", "ICICIBANK"],
+  "blackouts": [],
+  "live_approved": false,
+  "account_id": "",
+  "capital_rupees": 25000,
+  "config_hash": ""
+}
