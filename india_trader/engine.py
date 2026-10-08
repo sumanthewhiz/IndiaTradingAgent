@@ -54,6 +54,7 @@ class TradingEngine:
         self.mismatch_count = 0
         self.last_reject: tuple[str, str] | None = None
         self.last_rejection_reason = ""
+        self.last_rejection_details: dict[str, Any] = {}
         self.next_day = False
         self.state: dict[str, Any] = store.get("engine") or {
             "version": 1, "mode": mode, "config_hash": config.fingerprint,
@@ -75,16 +76,29 @@ class TradingEngine:
             previous = asdict(previous_config) if previous_config else None
             current = asdict(config)
             eligible_upgrade = False
+            old_strategy = previous_config.strategy if previous_config else None
+            new_strategy = config.strategy
+            known_old = old_strategy and (
+                (old_strategy.enabled == ["orb", "vwap_pullback"] and old_strategy.benchmark_alignment == "absolute")
+                or (old_strategy.enabled == ["orb", "vwap_pullback", "momentum_breakout"]
+                    and old_strategy.benchmark_alignment == "relative_strength")
+            ) and (old_strategy.participation_profile, old_strategy.volume_ratio,
+                   old_strategy.min_net_reward_r, old_strategy.min_profit_cost_multiple) == ("selective", 1.5, 1.5, 3.0)
+            known_new = (
+                new_strategy.enabled == ["orb", "vwap_pullback", "momentum_breakout"]
+                and new_strategy.benchmark_alignment == "relative_strength"
+                and (new_strategy.participation_profile, new_strategy.volume_ratio,
+                     new_strategy.min_net_reward_r, new_strategy.min_profit_cost_multiple)
+                in {("selective", 1.5, 1.5, 3.0), ("balanced", 1.2, 1.0, 2.0)}
+            )
             if (allow_signal_profile_upgrade and previous is not None
                     and self.state["position"] is None and not self.state["quarantine"]
                     and all(x["status"] in TERMINAL for x in self.state["orders"])
-                    and previous["strategy"]["enabled"] == ["orb", "vwap_pullback"]
-                    and previous["strategy"]["benchmark_alignment"] == "absolute"
-                    and current["strategy"]["enabled"] == ["orb", "vwap_pullback", "momentum_breakout"]
-                    and current["strategy"]["benchmark_alignment"] == "relative_strength"):
+                    and known_old and known_new):
                 upgraded = asdict(previous_config)
-                upgraded["strategy"]["enabled"] = list(current["strategy"]["enabled"])
-                upgraded["strategy"]["benchmark_alignment"] = "relative_strength"
+                for key in ("enabled", "benchmark_alignment", "participation_profile", "volume_ratio",
+                            "min_net_reward_r", "min_profit_cost_multiple"):
+                    upgraded["strategy"][key] = current["strategy"][key]
                 eligible_upgrade = upgraded == current
                 previous = upgraded
             if previous:
@@ -252,12 +266,13 @@ class TradingEngine:
         quote = self.position_quote(symbol, at)
         return "broker_readonly_quote" if quote is not None and quote is self.exit_quotes.get(symbol) else "stream"
 
-    def _reject(self, candidate: Candidate, reason: str, at: datetime) -> None:
+    def _reject(self, candidate: Candidate, reason: str, at: datetime, **details: Any) -> None:
         self.last_rejection_reason = reason
+        self.last_rejection_details = details
         key = (candidate.symbol, reason)
         if key != self.last_reject:
             self.store.audit(at, "CANDIDATE_REJECTED", symbol=candidate.symbol,
-                             setup=candidate.setup, reason=reason)
+                             setup=candidate.setup, reason=reason, details=details)
             self.last_reject = key
 
     def observe_stream_quote(self, tick: Tick, received_at: datetime, at: datetime) -> bool:
@@ -328,6 +343,7 @@ class TradingEngine:
                     )
                 else:
                     self.signals.decision["reason"] = "Risk gate: " + self.last_rejection_reason
+                    self.signals.decision["risk_details"] = self.last_rejection_details
         if self.signals.decision:
             decision = self.signals.decision
             self.store.audit(at, "SIGNAL_EVALUATED", **decision)
@@ -360,7 +376,8 @@ class TradingEngine:
 
     def consider(self, candidate: Candidate, at: datetime) -> bool:
         cfg, risk = self.config, self.config.risk
-        deny = lambda reason: self._reject(candidate, reason, at)
+        self.last_rejection_details = {}
+        deny = lambda reason, **details: self._reject(candidate, reason, at, **details)
         quote = self._fresh(candidate.symbol, at)
         if (self.state["halt"] or not self.state["initialized"] or not self.reconciled
                 or not self.broker_reads_ready or not self.position_feed_ready):
@@ -461,14 +478,23 @@ class TradingEngine:
                 high = mid - 1
         quantity = low
         if quantity < 1:
-            deny("minimum share fails funded-capital/liquidity/cost-aware risk budget")
+            deny("minimum share fails funded-capital/liquidity/cost-aware risk budget",
+                 one_share_limit_paise=entry, spendable_paise=spendable,
+                 position_cap_paise=bps(self.state["capital"], risk.max_position_bps),
+                 one_share_modeled_risk_paise=planned_loss(1), risk_budget_paise=risk_budget,
+                 max_cash_depth_turnover_quantity=max_qty)
             return False
         loss = planned_loss(quantity)
         costs = cfg.costs.fee("BUY", entry * quantity) + cfg.costs.fee("SELL", target * quantity)
         profit = quantity * (target - entry) - costs
         if (profit < loss * cfg.strategy.min_net_reward_r
                 or profit < costs * cfg.strategy.min_profit_cost_multiple):
-            deny("expected target does not clear net reward/cost hurdle")
+            deny("expected target does not clear net reward/cost hurdle",
+                 quantity=quantity, modeled_target_net_paise=profit, modeled_risk_paise=loss,
+                 modeled_fees_paise=costs, required_net_reward_r=cfg.strategy.min_net_reward_r,
+                 required_profit_cost_multiple=cfg.strategy.min_profit_cost_multiple,
+                 net_reward_r=round(profit/loss, 3) if loss else None,
+                 profit_cost_multiple=round(profit/costs, 3) if costs else None)
             return False
         self.position = Position(
             candidate.symbol, candidate.setup, at.isoformat(), stop, target,
@@ -477,7 +503,9 @@ class TradingEngine:
         self.state["trades"] += 1
         self.store.audit(at, "ENTRY_PLAN", symbol=candidate.symbol, setup=candidate.setup,
                          quantity=quantity, limit=entry, stop=stop, stop_limit=stop_limit,
-                         target=target, modeled_risk=loss, modeled_target_net=profit)
+                         target=target, modeled_risk=loss, modeled_target_net=profit,
+                         modeled_fees=costs, participation_profile=cfg.strategy.participation_profile,
+                         net_reward_r=round(profit/loss, 3), risk_budget_paise=risk_budget)
         self._submit(candidate.symbol, "entry", "BUY", quantity, entry, 0, at)
         return True
 

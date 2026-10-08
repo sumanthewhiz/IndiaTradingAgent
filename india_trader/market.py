@@ -140,12 +140,18 @@ class SignalAgent:
         if bar is None or tick.symbol not in self.trade_symbols:
             return None
         cfg = self.config.strategy
+        balanced = cfg.participation_profile == "balanced"
         reference = self.tapes[self.config.market.benchmark]
         ref = reference.latest
         size = self.instruments[tick.symbol].tick
         history = tape.bars
         recent = history[-3:]
-        reference_recent = [x for x in reference.bars if x.complete][-3:]
+        reference_history = reference.bars
+        if (reference.bar is not None and reference.bar.complete
+                and reference.bar.end == bar.end):
+            # A stock's closing tick may arrive before the index's next-bucket tick.
+            reference_history = [*reference_history, reference.bar]
+        reference_recent = [x for x in reference_history if x.complete][-3:]
         benchmark_return = (ref.last / reference.first_price - 1) * 10000 if ref and reference.first_price else None
         stock_return = (bar.close / tape.first_price - 1) * 10000 if tape.first_price else None
         relative_strength = stock_return - benchmark_return if stock_return is not None and benchmark_return is not None else None
@@ -160,6 +166,27 @@ class SignalAgent:
             and recent[-1].close > recent[0].close
             and reference_15m is not None and reference_15m >= -50
         )
+        aligned_recent_bars = (
+            len(recent) == 3 and len(reference_recent) == 3
+            and all(x.complete for x in recent)
+            and all(left.end == right.start for series in (recent, reference_recent)
+                    for left, right in zip(series, series[1:]))
+            and recent[0].start == reference_recent[0].start
+            and recent[-1].end == reference_recent[-1].end
+        )
+        stock_recent_return = ((recent[-1].close/recent[0].open - 1)*10000
+                               if aligned_recent_bars else None)
+        benchmark_recent_return = ((reference_recent[-1].close/reference_recent[0].open - 1)*10000
+                                   if aligned_recent_bars else None)
+        recent_relative_strength = (
+            stock_recent_return - benchmark_recent_return if aligned_recent_bars else None
+        )
+        recent_path = (
+            balanced and cfg.benchmark_alignment == "relative_strength" and aligned_recent_bars
+            and stock_recent_return > 0 and recent_relative_strength >= 10
+            and benchmark_recent_return >= -50 and bar.close > tape.vwap and bar.close > tape.ema
+            and recent[-1].close > recent[0].close
+        )
         gates = {
             "complete_bar": bar.complete,
             "opening_history_ready": tape.complete_opening,
@@ -169,7 +196,7 @@ class SignalAgent:
                                     and abs((tick.at - ref.at).total_seconds())
                                     <= self.config.market.max_quote_age_seconds),
             "stock_above_vwap": tape.vwap > 0 and bar.close > tape.vwap,
-            "market_alignment": index_positive or relative_path,
+            "market_alignment": index_positive or relative_path or recent_path,
         }
         self.decision = {
             "symbol": tick.symbol, "bar_start": bar.start.isoformat(), "bar_end": bar.end.isoformat(),
@@ -178,8 +205,13 @@ class SignalAgent:
             "benchmark_return_bps": round(benchmark_return, 2) if benchmark_return is not None else None,
             "stock_relative_strength_bps": round(relative_strength, 2) if relative_strength is not None else None,
             "benchmark_recent_bps": round(reference_15m, 2) if reference_15m is not None else None,
+            "stock_recent_bps": round(stock_recent_return, 2) if stock_recent_return is not None else None,
+            "recent_relative_strength_bps": round(recent_relative_strength, 2)
+                if recent_relative_strength is not None else None,
+            "participation_profile": cfg.participation_profile,
             "alignment_path": "index_above_open" if index_positive else
-                              "stock_relative_strength" if relative_path else "not_aligned",
+                              "stock_relative_strength" if relative_path else
+                              "recent_relative_strength" if recent_path else "not_aligned",
             "checks": gates, "setup_checks": {}, "entry_attempted": False,
         }
         opening_count = cfg.opening_range_minutes // 5
@@ -196,7 +228,8 @@ class SignalAgent:
                 "morning_window": confirmation_start.time() <= tick.at.time() <= time(10, 30),
                 "complete_opening_range": len(opening) == opening_count and len(history) >= opening_count + 1,
                 "new_range_breakout": len(history) >= 2 and history[-2].close <= high < bar.close,
-                "breakout_volume": average_volume > 0 and bar.volume >= average_volume * cfg.volume_ratio,
+                "breakout_volume": average_volume > 0 and bar.volume >= average_volume * (
+                    max(1.5, cfg.volume_ratio) if balanced else cfg.volume_ratio),
             }
             self.decision["setup_checks"]["orb"] = checks
             if all(checks.values()):
@@ -220,14 +253,16 @@ class SignalAgent:
                 candidates.append(Candidate(tick.symbol, "vwap_pullback", tick.at, bar.low - size))
         if "momentum_breakout" in cfg.enabled:
             base_high = max((x.high for x in previous), default=0)
+            minimum_history = 12 if balanced else 20
             checks = {
-                "twenty_bar_history": warm,
+                "trend_history_ready": sum(x.complete for x in history) >= minimum_history,
                 "complete_three_bar_base": len(previous) == 3 and all(x.complete for x in previous),
                 "close_breaks_recent_high": bar.close > base_high > 0,
                 "bullish_breakout": bar.close > bar.open,
                 "above_ema20": bar.close > tape.ema,
                 "confirmation_volume": prior_volume > 0 and bar.volume >= prior_volume * cfg.volume_ratio,
             }
+            self.decision["momentum_minimum_bars"] = minimum_history
             self.decision["setup_checks"]["momentum_breakout"] = checks
             if all(checks.values()):
                 candidates.append(Candidate(tick.symbol, "momentum_breakout", tick.at, min(bar.low, base_high) - size))

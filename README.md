@@ -37,10 +37,15 @@ A transient unfinished publication may use only the last complete verified
 snapshot within the unchanged freshness deadline; expired/invalid coverage
 still blocks entries.
 
-The automatic profile now includes stock-relative-strength alignment and a
-volume-confirmed continuation setup, rather than vetoing every stock when
-NIFTY is marginally below its open. Each completed candle produces an explicit
-signal/no-trade diagnostic. Capital, loss, ownership and execution limits remain.
+The automatic **balanced participation** profile includes confirmed
+recent-relative-strength recoveries and 1.2x-volume continuation setups after
+12 complete bars, without relaxing entry prices or cash/loss limits. Cost
+checks require a modeled net target at least 1x planned loss and 2x fees.
+The dashboard summarizes opportunities and exact blockers instead of suggesting
+that a live connection means entries are permitted. Routine official RBI
+operational notices no longer automatically pause the entire market or spend
+AI tokens; genuine policy/distress and critical-event pauses remain.
+More qualifying signals do not establish an edge or guarantee a trade/profit.
 
 Pre-market research begins from **08:30 IST**, with continuous-market monitoring
 from **09:15** and earliest confirmed five-minute opening entry **09:25** for

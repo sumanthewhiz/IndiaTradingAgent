@@ -406,6 +406,8 @@ class ControllerTests(unittest.TestCase):
             view = store.get("runtime")
             self.assertTrue(view["live"])
             self.assertFalse(view["entries_allowed"])
+            self.assertIn("entries paused by an event until 11:00:00 IST", view["reason"])
+            self.assertEqual(view["participation_profile"], "balanced")
 
     def test_verified_account_is_visible_without_a_plan_or_trade_ledger(self):
         self.vault.save(FAKE_KEYS, True)

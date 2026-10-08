@@ -24,8 +24,16 @@ from .engine import TradingEngine
 from .storage import Store
 
 HIGH_IMPACT = re.compile(
-    r"\b(earnings|results|fraud|suspend(?:ed|sion)?|trading halt|default|"
+    r"\b(earnings|results|fraud|suspend(?:ed)?|suspension|trading halt|default|"
     r"insolvency|merger|acquisition|rbi|rate decision|war|earthquake|cyberattack)\b",
+    re.IGNORECASE,
+)
+RBI_MATERIAL = re.compile(
+    r"\b(emergency|unscheduled|unexpected|crisis|fraud|insolvency|bankruptcy|default|defaulted|"
+    r"failed to (?:pay|settle)|suspend(?:ed)?|suspension|trading halt|war|earthquake|cyberattack|"
+    r"merger|acquisition|earnings|financial results|monetary policy|policy rate|"
+    r"rate decision|MPC|cash reserve ratio|CRR|bank rate)\b|"
+    r"\b(?:repo rate|SDF rate|MSF rate).{0,40}\b(?:cut|hike|increase|decrease|revis|chang)",
     re.IGNORECASE,
 )
 
@@ -39,8 +47,25 @@ def routine_auction_result(text: str, source: str) -> bool:
     )
 
 
+def routine_rbi_release(text: str, source: str) -> bool:
+    if source != "rbi-releases" or RBI_MATERIAL.search(text):
+        return False
+    if routine_auction_result(text, source):
+        return True
+    title = text.partition(":")[0].strip()
+    return bool(re.fullmatch(
+        r"Money Market Operations as on [A-Za-z]+ \d{1,2}, \d{4}|"
+        r"RBI to conduct (?:Overnight|\d+-day) Variable Rate Reverse Repo \(VRRR\) auction under LAF on .+|"
+        r"Results? of the (?:Overnight|\d+-day) Variable Rate Reverse Repo \(VRRR\) auction held on .+|"
+        r"Underwriting Auction for sale of Government Securities for .+",
+        title, re.I,
+    ))
+
+
 def high_impact_news(text: str, source: str) -> bool:
-    return bool(HIGH_IMPACT.search(text)) and not routine_auction_result(text, source)
+    if routine_rbi_release(text, source):
+        return False
+    return bool(HIGH_IMPACT.search(text) or (source == "rbi-releases" and RBI_MATERIAL.search(text)))
 
 
 def clear_legacy_routine_auction_pause(engine: TradingEngine, at: datetime) -> bool:
@@ -59,11 +84,12 @@ def clear_legacy_routine_auction_pause(engine: TradingEngine, at: datetime) -> b
         return False
     news = [item for item in engine.store.events("NEWS") if item["at"] == event["at"]]
     if (len(news) != 1 or news[0].get("severity") != "high"
-            or not routine_auction_result(news[0].get("headline", ""), news[0].get("source", ""))):
+            or len(news[0].get("headline", "")) >= 1000
+            or not routine_rbi_release(news[0].get("headline", ""), news[0].get("source", ""))):
         return False
     engine.state["pauses"].pop("*")
     engine.store.audit(at, "PAUSE_CLASSIFICATION_CORRECTED",
-                       reason="Routine RBI auction results with NIL dealer devolvement are not an earnings/policy event.",
+                       reason="Exactly audited routine RBI operational release is not a policy/earnings event.",
                        original_pause_at=event["at"], original_until=until)
     engine._save()
     return True
@@ -262,13 +288,21 @@ class EventAgent:
         digest = event.digest(at.date().isoformat())
         if self.store.seen_news(digest):
             return
+        routine = event.severity in {"low", "medium"} and routine_rbi_release(event.headline, event.source)
         self.store.audit(at, "NEWS", source=event.source, severity=event.severity,
-                         symbols=event.symbols, headline=event.headline)
+                         symbols=event.symbols, headline=event.headline,
+                         published_at=event.published.isoformat(), routine_operational=routine)
         if event.severity in {"high", "critical"} or high_impact_news(event.headline, event.source):
-            engine.pause(event.symbols, at + timedelta(minutes=self.config.news.pause_minutes),
-                         at, "deterministic_event_pause")
+            reaction_start = at if event.severity == "critical" else event.published
+            until = reaction_start + timedelta(minutes=self.config.news.pause_minutes)
+            if until > at:
+                engine.pause(event.symbols, until, at, "deterministic_event_pause")
+            else:
+                self.store.audit(at, "NEWS_REACTION_WINDOW_ELAPSED", source=event.source,
+                                 published_at=event.published.isoformat(),
+                                 reason="Published event reaction window already ended; no new pause added.")
         self.store.claim_news(digest, at)
-        if self.ai and ("*" in event.symbols or set(event.symbols) & engine.trade_symbols):
+        if self.ai and not routine and ("*" in event.symbols or set(event.symbols) & engine.trade_symbols):
             self.ai.submit(event, at)
 
 

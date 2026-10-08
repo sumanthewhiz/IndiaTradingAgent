@@ -186,8 +186,10 @@ class ManagedRun:
                 or not software_ready(root) or self.plan["day"] != now_ist().date().isoformat()
                 or config not in tuple(
                     default_auto_config(self.plan["selected"], self.plan["account"],
-                                        legacy_opening=opening, legacy_signals=signals)
+                                        legacy_opening=opening, legacy_signals=signals,
+                                        legacy_participation=participation)
                     for opening in (False, True) for signals in (False, True)
+                    for participation in (False, True)
                 )
                 or session.account_id != self.plan["account"]
                 or not session.live_approved or session.config_hash != config.fingerprint
@@ -258,6 +260,11 @@ class ManagedRun:
         if (not engine.position_feed_ready
                 and engine.state["halt"] in {"", POSITION_FEED_HALT}):
             reason = engine.position_feed_status["reason"]
+        if ready and global_pause:
+            reason = (
+                f"Market data is live; entries paused by an event until {timestamp(pauses['*']):%H:%M:%S} IST."
+                " No entry is permitted during that pause."
+            )
         summary = engine.summary(at)
         quotes = {symbol: {
             "symbol": symbol, "price_paise": quote.last, "bid_paise": quote.bid,
@@ -279,6 +286,7 @@ class ManagedRun:
             "stream": engine.stream_status,
             "reconciliation": engine.reconciliation_status,
             "position_feed": engine.position_feed_status,
+            "participation_profile": cfg.strategy.participation_profile,
         })
 
 

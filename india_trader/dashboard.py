@@ -13,6 +13,7 @@ import threading
 import time as clock
 import urllib.parse
 import webbrowser
+from collections import Counter
 from datetime import datetime, timedelta
 from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -23,7 +24,7 @@ from .autonomy import (
     POLICY_VERSION, PreparationBlocked, broker_connection, broker_login_url, exchange_broker_token,
     has_exposure, prepare_session, read_ledger, software_ready,
 )
-from .core import SafetyError, now_ist, timestamp
+from .core import Config, SafetyError, bps, now_ist, timestamp
 from .broker import BrokerError
 from .credentials import (
     CredentialVault, WindowsProtector, application_directory, atomic_bytes,
@@ -31,6 +32,33 @@ from .credentials import (
 )
 from .storage import InstanceLock, Store
 from .streaming import retry_delay
+
+
+def participation_summary(events: list[dict]) -> dict:
+    signals = [event for event in events if event["kind"] == "SIGNAL_EVALUATED"]
+    failures: Counter[str] = Counter()
+    rejections: Counter[str] = Counter()
+    candidates = 0
+    latest_risk = None
+    for event in signals:
+        if not event.get("checks", {}).get("entry_window", False):
+            continue
+        failures.update(name for name, passed in event["checks"].items() if not passed)
+        candidates += bool(event.get("setup"))
+        if event.get("reason", "").startswith("Risk gate: "):
+            rejections[event["reason"].removeprefix("Risk gate: ")] += 1
+            if event.get("risk_details"):
+                latest_risk = {key: event[key] for key in ("symbol", "bar_end", "reason", "risk_details")}
+    return {
+        "evaluated_bars": len(signals),
+        "entry_window_bars": sum(bool(item.get("checks", {}).get("entry_window")) for item in signals),
+        "qualified_signals": candidates,
+        "entry_plans": sum(item["kind"] == "ENTRY_PLAN" for item in events),
+        "top_signal_blocks": [{"reason": reason.replace("_", " "), "count": count}
+                              for reason, count in failures.most_common(4)],
+        "risk_rejections": [{"reason": reason, "count": count} for reason, count in rejections.most_common(4)],
+        "latest_risk_details": latest_risk,
+    }
 
 
 class Controller:
@@ -336,6 +364,7 @@ class Controller:
             "stream": None,
             "reconciliation": None,
             "position_feed": None,
+            "participation": None,
             "policy": {"allocation_cap_rupees": 25000, "position_percent": 25, "cash_buffer_percent": 10,
                        "risk_per_trade_percent": 0.25, "daily_loss_percent": 0.75,
                        "max_entry_attempts": 3, "max_consecutive_losses": 2,
@@ -383,6 +412,17 @@ class Controller:
             view.update(state="STOPPING", reason="Stopping entries and waiting for confirmed exits.", live=False,
                         entries_allowed=False)
         events = [{"at": at_, "kind": kind, **json.loads(payload)} for at_, kind, payload in rows]
+        participation = participation_summary(events)
+        config = Config.from_mapping(plan["config"]) if "config" in plan else None
+        if config:
+            participation.update(
+                profile=runtime.get("participation_profile", config.strategy.participation_profile),
+                position_cap_paise=bps(engine["capital"], config.risk.max_position_bps),
+                modeled_risk_per_trade_paise=bps(engine["day_start"], config.risk.risk_per_trade_bps),
+                daily_loss_limit_paise=bps(engine["day_start"], config.risk.daily_loss_bps),
+                min_net_reward_r=config.strategy.min_net_reward_r,
+                min_profit_cost_multiple=config.strategy.min_profit_cost_multiple,
+            )
         trades = [x for x in events if x["kind"] == "TRADE_CLOSED"]
         realized = sum(x["net_paise"] for x in trades)
         metrics_current = engine["day"] == day
@@ -414,6 +454,7 @@ class Controller:
             "stream": runtime.get("stream"),
             "reconciliation": runtime.get("reconciliation"),
             "position_feed": runtime.get("position_feed"),
+            "participation": participation,
             "universe_source": plan["universe_source"], "model": runtime.get("model", GEMINI_MODEL),
         })
         if ai:

@@ -241,6 +241,10 @@ td { padding: 14px 20px; border-top: 1px solid var(--cp-border); font-variant-nu
         <div class="panel-heading"><div><h2>Intraday opportunity discovery</h2><p class="sub" id="discovery-reason">Broad-market scanning starts with the live worker; discoveries are not automatic buys.</p></div><span class="chip" id="discovery-state">WAITING</span></div>
         <div class="panel-body"><div class="discovery-summary"><span id="discovery-universe">Universe: not loaded</span><span id="discovery-time">Last scan: &mdash;</span><span id="discovery-counts">Actively tracked: &mdash;</span><span>60s market scans &middot; news-triggered scans at most every 30s &middot; zero scan LLM tokens</span></div></div>
       </article>
+      <article class="panel discovery-panel">
+        <div class="panel-heading"><div><h2>Entry opportunities &amp; blockers</h2><p class="sub" id="participation-summary">Completed-bar decisions will appear during the session.</p></div><span class="chip" id="participation-profile">AWAITING PLAN</span></div>
+        <div class="panel-body"><p class="sub" id="participation-limits">Cash, cost and loss limits apply to every opportunity.</p><p class="sub" id="participation-blocks">No decision history yet. No minimum trade quota is imposed.</p><p class="sub" id="participation-risk"></p></div>
+      </article>
       <div class="cards">
         <article class="card"><div class="small-label">Today's trading P&amp;L</div><div class="value" id="total-pnl">&mdash;</div><div class="sub">Realized + open; modeled trading fees only</div></article>
         <article class="card"><div class="small-label">Realized P&amp;L</div><div class="value" id="realized-pnl">&mdash;</div><div class="sub" id="completed-label">No completed trades yet</div></article>
@@ -444,6 +448,32 @@ td { padding: 14px 20px; border-top: 1px solid var(--cp-border); font-variant-nu
     text('side-state', live ? 'Live broker engine' : 'Not trading live');
     text('banner-title', live ? 'Connected to real markets. Every order is risk-gated.' : labels[s.state] || 'Waiting');
     text('banner-reason', s.reason);
+    const participation = s.participation;
+    text('participation-profile', participation?.profile ? participation.profile.toUpperCase() : 'AWAITING PLAN');
+    text('participation-summary', participation
+      ? participation.entry_window_bars+' entry-window candles checked \u00b7 '+
+        participation.qualified_signals+' qualified signals \u00b7 '+participation.entry_plans+' entry plans today'
+      : 'Completed-bar decisions will appear during the session.');
+    text('participation-limits', participation?.position_cap_paise !== undefined
+      ? 'Position cap '+money(participation.position_cap_paise)+' \u00b7 modeled risk/trade '+
+        money(participation.modeled_risk_per_trade_paise)+' \u00b7 daily loss limit '+
+        money(participation.daily_loss_limit_paise)+' \u00b7 minimum net reward/risk '+
+        participation.min_net_reward_r+'x; net target must cover '+participation.min_profit_cost_multiple+'x modeled fees.'
+      : 'Cash, cost and loss limits apply to every opportunity.');
+    const blocks = [...(participation?.top_signal_blocks || []), ...(participation?.risk_rejections || [])];
+    text('participation-blocks', blocks.length
+      ? 'Observed blockers: '+blocks.map(x=>x.reason+' ('+x.count+')').join('; ')+'. Multiple checks can fail on the same candle.'
+      : 'No recorded entry blockers yet. No minimum trade quota is imposed.');
+    const lastRisk = participation?.latest_risk_details, risk = lastRisk?.risk_details;
+    text('participation-risk', risk
+      ? lastRisk.symbol+' '+atTime(lastRisk.bar_end)+' \u00b7 '+
+        (risk.one_share_modeled_risk_paise !== undefined
+          ? 'One share: '+money(risk.one_share_limit_paise)+'; modeled loss '+
+            money(risk.one_share_modeled_risk_paise)+' vs budget '+money(risk.risk_budget_paise)+
+            '; spendable '+money(risk.spendable_paise)+'.'
+          : 'Modeled net target '+money(risk.modeled_target_net_paise)+' vs modeled risk '+
+            money(risk.modeled_risk_paise)+' and fees '+money(risk.modeled_fees_paise)+'.')
+      : '');
     $('setup-shortcut').hidden = live;
     text('setup-shortcut', s.state === 'WAITING_CONFIG' ? 'Configure credentials' : 'View credentials');
     const brokerSaved = !!s.credentials?.saved?.broker_api_key;

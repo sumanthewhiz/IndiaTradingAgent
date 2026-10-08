@@ -107,6 +107,7 @@ class StrategyConfig:
     max_hold_minutes: int = 45
     opening_range_minutes: int = 15
     benchmark_alignment: str = "absolute"
+    participation_profile: str = "selective"
 
 
 @dataclass(frozen=True)
@@ -261,6 +262,7 @@ class Config:
             (set(s.enabled) <= {"orb", "vwap_pullback", "momentum_breakout"}, "unsupported setup"),
             (s.opening_range_minutes in (5, 15), "opening range must be 5 or 15 minutes"),
             (s.benchmark_alignment in {"absolute", "relative_strength"}, "benchmark alignment"),
+            (s.participation_profile in {"selective", "balanced"}, "participation profile"),
             (1.5 <= s.reward_r <= 5 and 1 <= s.min_net_reward_r <= s.reward_r, "reward ratios"),
             (s.min_profit_cost_multiple >= 2, "cost hurdle"),
             (1 <= s.volume_ratio <= 5, "volume_ratio"),

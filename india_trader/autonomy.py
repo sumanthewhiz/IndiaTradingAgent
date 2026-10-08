@@ -62,13 +62,18 @@ def validate_broker_capabilities(profile: dict) -> None:
 
 
 def default_auto_config(symbols: list[str], account: str, *, legacy_opening: bool = False,
-                        legacy_signals: bool = False) -> Config:
+                        legacy_signals: bool = False, legacy_participation: bool = False) -> Config:
+    balanced = not (legacy_signals or legacy_participation)
     config = Config(
         market=replace(Config().market, symbols=list(symbols), entry_start="09:35" if legacy_opening else "09:25"),
         strategy=replace(Config().strategy, enabled=["orb", "vwap_pullback"] + (
             [] if legacy_signals else ["momentum_breakout"]),
             opening_range_minutes=15 if legacy_opening else 5,
-            benchmark_alignment="absolute" if legacy_signals else "relative_strength"),
+            benchmark_alignment="absolute" if legacy_signals else "relative_strength",
+            participation_profile="balanced" if balanced else "selective",
+            volume_ratio=1.2 if balanced else 1.5,
+            min_net_reward_r=1.0 if balanced else 1.5,
+            min_profit_cost_multiple=2.0 if balanced else 3.0),
         news=NewsConfig(
             inbox="unused-managed-inbox", allowed_sources=list(NEWS_SOURCES),
             required_sources=list(NEWS_SOURCES), rss_poll_seconds=120,
@@ -327,8 +332,10 @@ def prepare_session(root: Path, directory: Path, vault: CredentialVault, progres
     config = Config.from_mapping(saved_plan["config"]) if reused_selection and "config" in saved_plan else default_auto_config(selected, account)
     if not exposure:
         for legacy_opening in (False, True):
-            if config == default_auto_config(selected, account, legacy_opening=legacy_opening, legacy_signals=True):
-                # Adopt only the published signal-profile upgrade; no risk/size/time reset.
+            if any(config == default_auto_config(
+                selected, account, legacy_opening=legacy_opening,
+                legacy_signals=legacy_signals, legacy_participation=True,
+            ) for legacy_signals in (False, True)):
                 config = default_auto_config(selected, account, legacy_opening=legacy_opening)
                 break
     check_flat_entry_window(http, config, exposure)

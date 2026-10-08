@@ -406,9 +406,11 @@ entries; no client can guarantee publisher availability.
 
 ### Autonomous decisions, with explicit limits
 
-The dashboard profile enables opening-range breakout, VWAP pullback and
-volume-confirmed intraday momentum breakout. These are research hypotheses,
-not a proven profitable or expert-human-equivalent strategy.
+The dashboard uses a **balanced participation** profile for opening-range
+breakout, VWAP pullback and volume-confirmed intraday momentum breakout. It
+seeks more qualifying entries than the older selective profile without
+increasing capital, position-size or modeled loss limits. These are research
+hypotheses, not a proven profitable or expert-human-equivalent strategy.
 
 **Relative-strength alignment:** the index-above-open path remains available.
 If NIFTY is flat or below its opening reference, a stock is no longer rejected
@@ -418,13 +420,36 @@ VWAP and EMA20, with rising recent completed closes. The benchmark must have
 three recent completed bars and must not be falling more than 50 basis points
 over that recent interval. Quote-freshness checks are unchanged.
 
-**Momentum breakout:** after at least 20 complete five-minute bars, a bullish
+The balanced profile also permits a **recent relative-strength recovery**:
+the stock may still be below its session open, but its last three complete
+five-minute bars must show a positive return and rising closes, at least
+10 basis points of outperformance over the benchmark's matching interval,
+and a close above VWAP and EMA20. The benchmark cannot have fallen more than
+50 basis points in that interval. Gaps, partial bars and stale index quotes
+cannot satisfy this route; a rising price alone is not a signal.
+
+**Momentum breakout:** after at least 12 complete five-minute bars, a bullish
 bar must close above the previous three completed bars' high, above VWAP/EMA20,
-with volume at least 1.5 times the prior three-bar average. This can recognize
+with volume at least 1.2 times the prior three-bar average. This can recognize
 a continuing trend that never pulls back to VWAP. A structural stop is derived
 from the breakout bar/base; the ordinary cost-aware sizing and risk gate can
 still reject the candidate. There is no immediate buy just because a stock has
 already risen.
+
+The opening-range setup retains its minimum 1.5x opening-range volume
+confirmation. VWAP pullback retains 20 complete bars and now requires 1.2x
+confirmation volume. The old selective continuation profile requires 20 bars
+and 1.5x volume; the manual CLI still defaults to its original selective rules.
+
+**Trade economics:** the balanced profile still uses a target at three times
+the structural stop distance. After modeled round-trip fees, its target net
+must be at least **1.0x the planned stop-limit loss including fees**, and at
+least **2.0x modeled fees**. The older thresholds were 1.5x and 3.0x respectively.
+This deliberately admits some smaller, cost-efficient moves; it does not
+predict their win probability. A lower reward/risk threshold can increase
+losses or require a higher hit rate to break even. Fee-dominated, unfunded and
+over-budget trades remain rejected; targets are not moved farther away just
+to make a failing calculation pass.
 
 The specific published signal-profile upgrade can be adopted on a paused,
 flat restart without changing the day's watchlist/opening window or resetting
@@ -439,7 +464,15 @@ reason is stored too. The watchlist and activity timeline show the latest
 explanation. There is no LLM charge for these checks. Historical periods before
 this instrumentation cannot be reconstructed exactly from the old event log.
 
-The fixed dashboard policy is deliberately conservative:
+**Entry opportunities & blockers** summarizes today's entry-window candle
+evaluations, qualified signals, entry plans and common failed checks. Multiple
+checks can fail on one candle, so their counts are not probabilities. New
+execution rejections also show the one-share cost/risk versus the actual budget,
+or the modeled target, loss and fee calculations. It makes no profitable-trade
+claim about rejected signals. A market-wide event pause is shown explicitly
+even when the market connection itself is live.
+
+The hard cash and loss controls remain unchanged:
 
 | Control | Automatic policy |
 |---|---|
@@ -462,8 +495,9 @@ Stop-limit orders can fail to fill, execution can slip or be rejected, and a
 position can remain open through an outage or market close. The dashboard
 will not claim that a stop request proves the account is flat.
 
-No trades is a legitimate outcome. The system does not switch to riskier
-products, reduce safeguards or increase size to meet a daily profit target.
+No trades is still a legitimate outcome. The system does not force a daily
+trade quota, switch to riskier products, bypass hard safety checks or increase
+size to meet a daily profit target.
 
 Cash already loaded into the broker account before first startup can be used.
 Kite can report today's deposits in `opening_balance + intraday_payin` while
@@ -498,13 +532,21 @@ deterministic high-impact-news pauses remain unchanged, and all data/signal/risk
 checks still apply. This is not represented as a successful model assessment.
 Reserved AI budget is retained and there is no automatic generation retry.
 
-A narrowly recognized RBI **Government Stock - Auction Results** release with
-**NIL dealer devolvement** is treated as routine information, not a market-wide
-earnings/policy event just because its title contains "results". Non-NIL
-devolvement, emergency/policy headlines, other publishers and explicitly
-high-impact incoming events retain their normal treatment. The old erroneous
-pause can be corrected only when its exact audit trail matches that routine
-release, the engine is flat/reconciled, and no other active global pause exists.
+Recognized official RBI **money-market operations summaries**, standard
+**VRRR notices/results**, **government-security underwriting notices**, and
+**Government Stock - Auction Results with NIL dealer devolvement** are recorded
+as operational context rather than automatically pausing every stock because
+the text contains "RBI" or "results". This is source/title-specific, not an
+assertion that liquidity operations can never move prices. Such routine
+releases do not consume the optional AI budget.
+
+Emergency/policy/CRR/MPC changes, distress, non-NIL devolvement, other publishers
+and explicitly high/critical incoming events retain their normal treatment.
+An old false pause can be corrected only against its exact, non-truncated
+audited routine release while flat/reconciled and without any other active global pause.
+Ordinary material-event pauses end relative to the publication time, so an
+updated description does not restart the same reaction window. Critical
+incoming events still receive a fresh full pause from receipt time.
 
 The profile permits at most two calls/day, 8,000 reserved tokens/day, a
 30-minute cooldown, a 20-second request timeout and an estimated USD 0.10/day
